@@ -1,6 +1,7 @@
 // Copyright (c) SimpleStaking and Tezedge Contributors
 // SPDX-License-Identifier: MIT
 
+use failure::format_err;
 use hyper::{Body, Request};
 use slog::warn;
 
@@ -119,7 +120,9 @@ pub async fn dev_action_cursor(
                 env.persistent_storage(),
             )
         } else {
-            unreachable!()
+            Err(format_err!(
+                "Invalid parameter: should be either `block_hash` or `contract_address`"
+            ))
         },
         env.log(),
     )
@@ -157,6 +160,21 @@ pub async fn dev_stats_memory(
     }
 }
 
+pub async fn dev_stats_memory_protocol_runners(
+    _: Request<Body>,
+    _: Params,
+    _: Query,
+    env: RpcServiceEnvironment,
+) -> ServiceResult {
+    match dev_services::get_stats_memory_protocol_runners() {
+        Ok(resp) => make_json_response(&resp),
+        Err(e) => {
+            warn!(env.log(), "GetStatsMemory: {}", e);
+            empty()
+        }
+    }
+}
+
 pub async fn context_stats(
     _: Request<Body>,
     _: Params,
@@ -167,4 +185,20 @@ pub async fn context_stats(
         dev_services::get_context_stats(env.tezedge_context()),
         env.log(),
     )
+}
+
+/// Get the version string
+pub async fn dev_version(
+    _: Request<Body>,
+    _: Params,
+    _: Query,
+    env: RpcServiceEnvironment,
+) -> ServiceResult {
+    match dev_services::get_dev_version() {
+        Ok(resp) => make_json_response(&resp),
+        Err(e) => {
+            warn!(env.log(), "GetStatsMemory: {}", e);
+            empty()
+        }
+    }
 }
