@@ -90,7 +90,7 @@ If you want to run this demo, you need to first install the following:
     ```
     ![alt text](https://raw.githubusercontent.com/simplestaking/tezedge/master/docs/images/node_bootstrap.gif)
 3. **Open your web browser by entering this address into your browser's URL bar: http://localhost:8080**
-    ![alt text](https://raw.githubusercontent.com/simplestaking/tezedge/master/docs/images/tezedge_explorer.gif)
+    ![alt text](https://raw.githubusercontent.com/simplestaking/tezedge/fixes/docs/images/tezedge_explorer.gif)
 
 
 _**Docker for Windows**_
