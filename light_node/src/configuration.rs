@@ -82,7 +82,7 @@ pub struct Rpc {
 
 #[derive(Debug, Clone)]
 pub struct Logging {
-    pub log: Vec<LoggerType>,
+    pub log: LoggerType,
     pub ocaml_log_enabled: bool,
     pub level: slog::Level,
     pub format: LogFormat,
@@ -126,8 +126,12 @@ impl FromStr for LoggerType {
 
 #[derive(PartialEq, Debug, Clone, EnumIter)]
 pub enum LoggerType {
+    /// Only logs to the terminal
     TerminalLogger,
+    /// Only logs to a file
     FileLogger,
+    /// Logs to both terminal and file
+    CombinedLogger,
 }
 
 impl MultipleValueArg for LoggerType {
@@ -135,6 +139,7 @@ impl MultipleValueArg for LoggerType {
         match self {
             LoggerType::TerminalLogger => vec!["terminal"],
             LoggerType::FileLogger => vec!["file"],
+            LoggerType::CombinedLogger => vec!["combined"],
         }
     }
 }
@@ -430,7 +435,6 @@ pub fn tezos_app() -> App<'static, 'static> {
         .arg(Arg::with_name("log")
             .long("log")
             .takes_value(true)
-            .multiple(true)
             .value_name("STRING")
             .possible_values(&LoggerType::possible_values())
             .help("Set the logger target. Default: terminal"))
@@ -847,24 +851,6 @@ impl Environment {
             .parse::<PathBuf>()
             .expect("Provided value cannot be converted to path");
 
-        let log_targets: HashSet<String> = match args.values_of("log") {
-            Some(v) => v.map(String::from).collect(),
-            None => std::iter::once("terminal".to_string()).collect(),
-        };
-
-        let log = log_targets
-            .iter()
-            .map(|name| {
-                LoggerType::from_str(name).unwrap_or_else(|_| {
-                    panic!(
-                        "Unknown log target {} - supported are: {:?}",
-                        &name,
-                        LoggerType::possible_values()
-                    )
-                })
-            })
-            .collect();
-
         Environment {
             p2p: crate::configuration::P2p {
                 listener_port: args
@@ -952,7 +938,11 @@ impl Environment {
                     .expect("Provided value cannot be converted into valid uri"),
             },
             logging: crate::configuration::Logging {
-                log,
+                log: args
+                    .value_of("log")
+                    .unwrap_or("")
+                    .parse::<LoggerType>()
+                    .expect("Was expecting one value from LoggerType"),
                 ocaml_log_enabled: args
                     .value_of("ocaml-log-enabled")
                     .unwrap_or("")
@@ -1205,41 +1195,42 @@ impl Environment {
     pub fn create_logger(&self) -> Logger {
         let Environment { logging, .. } = self;
 
-        let log_file = match &logging.file {
-            Some(file) => file.clone(),
-            None => {
-                let mut path = PathBuf::new();
-                path.push("./tezedge.log");
-                path
-            }
-        };
-
-        if logging.log.contains(&LoggerType::FileLogger)
-            && logging.log.contains(&LoggerType::TerminalLogger)
-        {
-            Logger::root(
-                slog::Duplicate::new(
-                    create_terminal_logger!(logging.format),
-                    create_file_logger!(logging.format, log_file),
+        match logging.log {
+            LoggerType::FileLogger => {
+                let log_file = parse_log_file_path(&logging.file);
+                Logger::root(
+                    create_file_logger!(logging.format, log_file)
+                        .filter_level(logging.level)
+                        .fuse(),
+                    slog::o!(),
                 )
-                .filter_level(logging.level)
-                .fuse(),
-                slog::o!(),
-            )
-        } else if logging.log.contains(&LoggerType::FileLogger) {
-            Logger::root(
-                create_file_logger!(logging.format, log_file)
-                    .filter_level(logging.level)
-                    .fuse(),
-                slog::o!(),
-            )
-        } else {
-            Logger::root(
+            }
+            LoggerType::TerminalLogger => Logger::root(
                 create_terminal_logger!(logging.format)
                     .filter_level(logging.level)
                     .fuse(),
                 slog::o!(),
-            )
+            ),
+            LoggerType::CombinedLogger => {
+                let log_file = parse_log_file_path(&logging.file);
+                Logger::root(
+                    slog::Duplicate::new(
+                        create_terminal_logger!(logging.format),
+                        create_file_logger!(logging.format, log_file),
+                    )
+                    .filter_level(logging.level)
+                    .fuse(),
+                    slog::o!(),
+                )
+            }
         }
+    }
+}
+
+fn parse_log_file_path(path: &Option<PathBuf>) -> PathBuf {
+    if let Some(path) = path {
+        path.clone()
+    } else {
+        PathBuf::from("./tezedge.log")
     }
 }
