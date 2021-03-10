@@ -13,9 +13,12 @@ use std::{collections::HashMap, collections::HashSet, fmt::Debug};
 
 use clap::{App, Arg};
 use rocksdb::ColumnFamilyDescriptor;
+use slog::{Drain, Logger};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
+use logging::detailed_json;
+use logging::file::FileAppenderBuilder;
 use shell::peer_manager::P2p;
 use shell::PeerConnectionThreshold;
 use storage::persistent::KeyValueSchema;
@@ -25,6 +28,52 @@ use tezos_api::environment::{TezosEnvironment, ZcashParams};
 use tezos_api::ffi::PatchContext;
 use tezos_wrapper::TezosApiConnectionPoolConfiguration;
 
+macro_rules! create_terminal_logger {
+    ($type:expr) => {{
+        match $type {
+            LogFormat::Simple => slog_async::Async::new(
+                slog_term::FullFormat::new(slog_term::TermDecorator::new().build())
+                    .build()
+                    .fuse(),
+            )
+            .chan_size(32768)
+            .overflow_strategy(slog_async::OverflowStrategy::Block)
+            .build(),
+            LogFormat::Json => {
+                slog_async::Async::new(detailed_json::default(std::io::stdout()).fuse())
+                    .chan_size(32768)
+                    .overflow_strategy(slog_async::OverflowStrategy::Block)
+                    .build()
+            }
+        }
+    }};
+}
+
+macro_rules! create_file_logger {
+    ($type:expr, $path:expr) => {{
+        let appender = FileAppenderBuilder::new($path)
+            .rotate_size(10_485_760 * 10) // 100 MB
+            .rotate_keep(2)
+            .rotate_compress(true)
+            .build();
+
+        match $type {
+            LogFormat::Simple => slog_async::Async::new(
+                slog_term::FullFormat::new(slog_term::PlainDecorator::new(appender))
+                    .build()
+                    .fuse(),
+            )
+            .chan_size(32768)
+            .overflow_strategy(slog_async::OverflowStrategy::Block)
+            .build(),
+            LogFormat::Json => slog_async::Async::new(detailed_json::default(appender).fuse())
+                .chan_size(32768)
+                .overflow_strategy(slog_async::OverflowStrategy::Block)
+                .build(),
+        }
+    }};
+}
+
 #[derive(Debug, Clone)]
 pub struct Rpc {
     pub listener_port: u16,
@@ -33,6 +82,7 @@ pub struct Rpc {
 
 #[derive(Debug, Clone)]
 pub struct Logging {
+    pub log: Vec<LoggerType>,
     pub ocaml_log_enabled: bool,
     pub level: slog::Level,
     pub format: LogFormat,
@@ -46,20 +96,45 @@ pub enum ContextActionStoreBackend {
     FileStorage,
 }
 
-impl ContextActionStoreBackend {
-    pub fn possible_values() -> Vec<&'static str> {
-        let mut possible_values = Vec::new();
-        for sp in ContextActionStoreBackend::iter() {
-            possible_values.extend(sp.supported_values());
-        }
-        possible_values
-    }
-
+impl MultipleValueArg for ContextActionStoreBackend {
     fn supported_values(&self) -> Vec<&'static str> {
         match self {
             ContextActionStoreBackend::RocksDB => vec!["rocksdb"],
             ContextActionStoreBackend::FileStorage { .. } => vec!["file"],
             ContextActionStoreBackend::NoneBackend => vec!["none"],
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ParseLoggerTypeError(String);
+
+impl FromStr for LoggerType {
+    type Err = ParseLoggerTypeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let s = s.to_ascii_lowercase();
+        for sp in LoggerType::iter() {
+            if sp.supported_values().contains(&s.as_str()) {
+                return Ok(sp);
+            }
+        }
+
+        Err(ParseLoggerTypeError(format!("Invalid variant name: {}", s)))
+    }
+}
+
+#[derive(PartialEq, Debug, Clone, EnumIter)]
+pub enum LoggerType {
+    TerminalLogger,
+    FileLogger,
+}
+
+impl MultipleValueArg for LoggerType {
+    fn supported_values(&self) -> Vec<&'static str> {
+        match self {
+            LoggerType::TerminalLogger => vec!["terminal"],
+            LoggerType::FileLogger => vec!["file"],
         }
     }
 }
@@ -83,6 +158,17 @@ impl FromStr for ContextActionStoreBackend {
             s
         )))
     }
+}
+
+pub trait MultipleValueArg: IntoEnumIterator {
+    fn possible_values() -> Vec<&'static str> {
+        let mut possible_values = Vec::new();
+        for sp in Self::iter() {
+            possible_values.extend(sp.supported_values());
+        }
+        possible_values
+    }
+    fn supported_values(&self) -> Vec<&'static str>;
 }
 
 pub trait ColumnFactory {
@@ -341,6 +427,13 @@ pub fn tezos_app() -> App<'static, 'static> {
             .takes_value(false)
             .conflicts_with("bootstrap-lookup-address")
             .help("Disables dns lookup to get the peers to bootstrap the network from. Default: false"))
+        .arg(Arg::with_name("log")
+            .long("log")
+            .takes_value(true)
+            .multiple(true)
+            .value_name("STRING")
+            .possible_values(&LoggerType::possible_values())
+            .help("Set the logger target. Default: terminal"))
         .arg(Arg::with_name("log-file")
             .long("log-file")
             .takes_value(true)
@@ -754,6 +847,24 @@ impl Environment {
             .parse::<PathBuf>()
             .expect("Provided value cannot be converted to path");
 
+        let log_targets: HashSet<String> = match args.values_of("log") {
+            Some(v) => v.map(String::from).collect(),
+            None => std::iter::once("terminal".to_string()).collect(),
+        };
+
+        let log = log_targets
+            .iter()
+            .map(|name| {
+                LoggerType::from_str(name).unwrap_or_else(|_| {
+                    panic!(
+                        "Unknown log target {} - supported are: {:?}",
+                        &name,
+                        LoggerType::possible_values()
+                    )
+                })
+            })
+            .collect();
+
         Environment {
             p2p: crate::configuration::P2p {
                 listener_port: args
@@ -841,6 +952,7 @@ impl Environment {
                     .expect("Provided value cannot be converted into valid uri"),
             },
             logging: crate::configuration::Logging {
+                log,
                 ocaml_log_enabled: args
                     .value_of("ocaml-log-enabled")
                     .unwrap_or("")
@@ -1087,6 +1199,47 @@ impl Environment {
                 .parse::<bool>()
                 .expect("Provided value cannot be converted to bool"),
             validate_cfg_identity_and_stop: args.is_present("validate-cfg-identity-and-stop"),
+        }
+    }
+
+    pub fn create_logger(&self) -> Logger {
+        let Environment { logging, .. } = self;
+
+        let log_file = match &logging.file {
+            Some(file) => file.clone(),
+            None => {
+                let mut path = PathBuf::new();
+                path.push("./tezedge.log");
+                path
+            }
+        };
+
+        if logging.log.contains(&LoggerType::FileLogger)
+            && logging.log.contains(&LoggerType::TerminalLogger)
+        {
+            Logger::root(
+                slog::Duplicate::new(
+                    create_terminal_logger!(logging.format),
+                    create_file_logger!(logging.format, log_file),
+                )
+                .filter_level(logging.level)
+                .fuse(),
+                slog::o!(),
+            )
+        } else if logging.log.contains(&LoggerType::FileLogger) {
+            Logger::root(
+                create_file_logger!(logging.format, log_file)
+                    .filter_level(logging.level)
+                    .fuse(),
+                slog::o!(),
+            )
+        } else {
+            Logger::root(
+                create_terminal_logger!(logging.format)
+                    .filter_level(logging.level)
+                    .fuse(),
+                slog::o!(),
+            )
         }
     }
 }
