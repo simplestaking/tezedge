@@ -793,10 +793,10 @@ steps:
     - /artifacts/assert_contains.sh "$resp" "18732"
 
 - name: wait-sandbox-node-start
-  image: simplestakingcom/tezos-node-bootstrap:latest
+  image: simplestakingcom/tezos-node-bootstrap:test
   pull: always
   commands:
-    - tezos-node-bootstrap --bootstrap --level=0 --node_tezedge=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT}
+    - tezos-node-bootstrap --bootstrap --level=0 --node_feature_new_node=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT}
 
 - name: init-client
   user: root
@@ -841,10 +841,10 @@ steps:
     - /artifacts/assert_contains.sh "$resp" "Injected B"
 
 - name: wait-sandbox-node-start-level-1
-  image: simplestakingcom/tezos-node-bootstrap:latest
+  image: simplestakingcom/tezos-node-bootstrap:test
   pull: if-not-exists
   commands:
-    - tezos-node-bootstrap --bootstrap --level=1 --node_tezedge=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT}
+    - tezos-node-bootstrap --bootstrap --level=1 --node_feature_new_node=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT}
 
 - name: check-context-constants
   user: root
@@ -876,10 +876,10 @@ steps:
     - /artifacts/assert_contains.sh "$resp" "Injected block B"
 
 - name: wait-sandbox-node-start-level-2
-  image: simplestakingcom/tezos-node-bootstrap:latest
+  image: simplestakingcom/tezos-node-bootstrap:test
   pull: if-not-exists
   commands:
-    - tezos-node-bootstrap --bootstrap --level=2 --node_tezedge=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT}
+    - tezos-node-bootstrap --bootstrap --level=2 --node_feature_new_node=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT}
 
 - name: stop-tezedge-node-via-rpc
   user: root
@@ -984,10 +984,10 @@ steps:
     - /artifacts/light-node --config-file /tmp/sandbox/tezedge_drone_sandbox.config --identity-expected-pow 0.0 --identity-file /tmp/sandbox/light-node/identity.json --tezos-data-dir /tmp/sandbox/tezos-node --bootstrap-db-path /tmp/sandbox/light-node --network sandbox --protocol-runner /artifacts/protocol-runner --disable-bootstrap-lookup --peer-thresh-high 1 --peer-thresh-low 1 --sandbox-patch-context-json-file /tmp/sandbox/sandbox-patch-context.json --log-level trace --ocaml-log-enabled true
 
 - name: wait-for-tezedge-to-start
-  image: simplestakingcom/tezos-node-bootstrap:latest
+  image: simplestakingcom/tezos-node-bootstrap:test
   pull: if-not-exists
   commands:
-    - tezos-node-bootstrap --bootstrap --level=0 --node_tezedge=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT}
+    - tezos-node-bootstrap --bootstrap --level=0 --node_feature_new_node=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT}
 
 # run empty ocaml sandbox and wait for it
 - name: ocaml-node-sandbox-run
@@ -1006,7 +1006,7 @@ steps:
     - tezos-node run --network sandbox --data-dir /home/tezos/data/ --sandbox /tmp/sandbox/sandbox-patch-context.json --no-bootstrap-peers --singleprocess --bootstrap-threshold 1 -vv
 
 - name: wait-for-ocaml-to-start
-  image: simplestakingcom/tezos-node-bootstrap:latest
+  image: simplestakingcom/tezos-node-bootstrap:test
   pull: if-not-exists
   commands:
     - tezos-node-bootstrap --bootstrap --level=0 --node_ocaml=$${OCAML_NODE_RPC_CONTEXT_ROOT}
@@ -1039,10 +1039,10 @@ steps:
 
 # test checks if this block is synchronized to rust node through p2p
 - name: wait-for-sync-on-level-1
-  image: simplestakingcom/tezos-node-bootstrap:latest
+  image: simplestakingcom/tezos-node-bootstrap:test
   pull: if-not-exists
   commands:
-    - tezos-node-bootstrap --bootstrap --level=1 --node_ocaml=$${OCAML_NODE_RPC_CONTEXT_ROOT} --node_tezedge=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT}
+    - tezos-node-bootstrap --bootstrap --level=1 --node_ocaml=$${OCAML_NODE_RPC_CONTEXT_ROOT} --node_feature_new_node=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT}
 
 - name: check-mempool-before-transfer
   user: root
@@ -1116,10 +1116,10 @@ steps:
 
 # test checks if this block is synchronized to rust node through p2p
 - name: wait-for-sync-on-level-2
-  image: simplestakingcom/tezos-node-bootstrap:latest
+  image: simplestakingcom/tezos-node-bootstrap:test
   pull: if-not-exists
   commands:
-    - tezos-node-bootstrap --bootstrap --level=2 --node_ocaml=$${OCAML_NODE_RPC_CONTEXT_ROOT} --node_tezedge=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT}
+    - tezos-node-bootstrap --bootstrap --level=2 --node_ocaml=$${OCAML_NODE_RPC_CONTEXT_ROOT} --node_feature_new_node=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT}
 
 # compare all rpc's from blocks 0 to 2 between defined nodes
 - name: rpc-test-for-levels-0-2
@@ -1210,10 +1210,10 @@ steps:
       - /artifacts/light-node --config-file "/artifacts/tezedge/tezedge_drone.config" --disable-bootstrap-lookup --network mainnet --identity-file "/artifacts/identities/identity_6.json" --protocol-runner /tmp/tezedge-cache/protocol-runner
 
   - name: bootstrapping-tezedge
-    image: simplestakingcom/tezos-node-bootstrap:latest
+    image: simplestakingcom/tezos-node-bootstrap:test
     pull: if-not-exists
     commands:
-      - tezos-node-bootstrap --bootstrap --level=0 --node_tezedge=$${TEZEDGE_NODE_RUN_MAINNET_RPC_CONTEXT_ROOT}
+      - tezos-node-bootstrap --bootstrap --level=0 --node_feature_new_node=$${TEZEDGE_NODE_RUN_MAINNET_RPC_CONTEXT_ROOT}
 
     # just run ocaml snapshoted node
   - name: ocaml-node-run
@@ -1234,7 +1234,7 @@ steps:
       - tezos-node run --data-dir /home/tezos/data --history-mode archive --rpc-addr 0.0.0.0:8732 --net-addr 0.0.0.0:9734 --network $${OCAML_NETWORK} --no-bootstrap-peers
 
   - name: wait-ocaml-node-to-start
-    image: simplestakingcom/tezos-node-bootstrap:latest
+    image: simplestakingcom/tezos-node-bootstrap:test
     pull: if-not-exists
     commands:
       - tezos-node-bootstrap --bootstrap --level=0 --node_ocaml=$${OCAML_NODE_RPC_CONTEXT_ROOT}
@@ -1265,7 +1265,7 @@ steps:
       - /artifacts/assert_contains.sh "$error" "no common network protocol"
 
   - name: check-ocaml-still-running
-    image: simplestakingcom/tezos-node-bootstrap:latest
+    image: simplestakingcom/tezos-node-bootstrap:test
     pull: if-not-exists
     commands:
       - tezos-node-bootstrap --bootstrap --level=0 --node_ocaml=$${OCAML_NODE_RPC_CONTEXT_ROOT}
@@ -1395,7 +1395,7 @@ steps:
     - tezos-node run --data-dir /home/tezos/data --history-mode archive --rpc-addr 0.0.0.0:8732 --net-addr 0.0.0.0:9734 --network $${NETWORK} --no-bootstrap-peers
 
 - name: wait-for-ocaml-snapshoted-nodes
-  image: simplestakingcom/tezos-node-bootstrap:latest
+  image: simplestakingcom/tezos-node-bootstrap:test
   pull: if-not-exists
   commands:
     - tezos-node-bootstrap --bootstrap --level=$${TO_BLOCK_HEADER} --node_ocaml_1=$${OCAML_NODE_RPC_CONTEXT_ROOT_1} --node_ocaml_2=$${OCAML_NODE_RPC_CONTEXT_ROOT_2} --node_ocaml_3=$${OCAML_NODE_RPC_CONTEXT_ROOT_3}
@@ -1452,10 +1452,10 @@ steps:
       - refs/pull/*/head
 
 - name: bootstrapping-tezedge
-  image: simplestakingcom/tezos-node-bootstrap:latest
+  image: simplestakingcom/tezos-node-bootstrap:test
   pull: if-not-exists
   commands:
-    - tezos-node-bootstrap --bootstrap --level=$${TO_BLOCK_HEADER} --node_tezedge=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT}
+    - tezos-node-bootstrap --bootstrap --level=$${TO_BLOCK_HEADER} --node_feature_new_node=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT}
 
 # now we have prepared ocaml and tezedge node, that can run tests - rpc, wrk, indexer-test
 
@@ -1513,19 +1513,19 @@ steps:
 
 # compare indexing from FROM_BLOCK_HEADER to TO_BLOCK_HEADER between defined nodes
 - name: indexer-test
-  image: simplestakingcom/tezos-node-bootstrap:latest
+  image: simplestakingcom/tezos-node-bootstrap:test
   pull: if-not-exists
   commands:
-    - tezos-node-bootstrap --indexer-test --level=$${TO_BLOCK_HEADER} --node_tezedge=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT} --indexer_tezedge=$${TEZEDGE_NODE_INDEXER_ROOT} --node_ocaml=$${OCAML_NODE_RPC_CONTEXT_ROOT_1} --indexer_ocaml=$${OCAML_NODE_INDEXER_ROOT}
+    - tezos-node-bootstrap --indexer-test --level=$${TO_BLOCK_HEADER} --node_feature_new_node=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT} --indexer_tezedge=$${TEZEDGE_NODE_INDEXER_ROOT} --node_ocaml=$${OCAML_NODE_RPC_CONTEXT_ROOT_1} --indexer_ocaml=$${OCAML_NODE_INDEXER_ROOT}
 
 # compare several rpc's performances from FROM_BLOCK_HEADER to TO_BLOCK_HEADER between defined nodes (with two nodes (current branch and ocaml))
 # not triggered on pull request, because on pull request is triggered more complex wrk test
 - name: wrk-performance-test-tezedge-vs-ocaml
-  image: simplestakingcom/tezos-node-bootstrap:latest
+  image: simplestakingcom/tezos-node-bootstrap:test
   pull: if-not-exists
   user: root
   commands:
-    - tezos-node-bootstrap --performance-test --level=$${WRK_TEST_BLOCK_HEADER} --node_tezedge=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT} --node_ocaml=$${OCAML_NODE_RPC_CONTEXT_ROOT_1} --wrk-duration=$${WRK_TEST_DURATION}
+    - tezos-node-bootstrap --performance-test --level=$${WRK_TEST_BLOCK_HEADER} --node_feature_new_node=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT} --node_ocaml=$${OCAML_NODE_RPC_CONTEXT_ROOT_1} --wrk-duration=$${WRK_TEST_DURATION}
   when:
     ref:
       exclude:
@@ -1533,20 +1533,20 @@ steps:
 
 # this is triggerd just on pull request to target branch
 - name: bootstrapping-tezedge-target-branch
-  image: simplestakingcom/tezos-node-bootstrap:latest
+  image: simplestakingcom/tezos-node-bootstrap:test
   commands:
-    - tezos-node-bootstrap --bootstrap --level=$${WRK_TEST_BLOCK_HEADER} --node_tezedge_target_branch=$${TEZEDGE_NODE_TARGET_BRANCH_RPC_CONTEXT_ROOT}
+    - tezos-node-bootstrap --bootstrap --level=$${WRK_TEST_BLOCK_HEADER} --node_stable_old_node=$${TEZEDGE_NODE_TARGET_BRANCH_RPC_CONTEXT_ROOT}
   when:
     ref:
     - refs/pull/*/head
 
 #  compare several rpc's performances from FROM_BLOCK_HEADER to TO_BLOCK_HEADER between defined nodes (with tree nodes (target_branch, current branch and ocaml))
 - name: wrk-performance-test-tezedge-vs-ocaml-vs-tezedge_target_branch
-  image: simplestakingcom/tezos-node-bootstrap:latest
+  image: simplestakingcom/tezos-node-bootstrap:test
   pull: if-not-exists
   user: root
   commands:
-    - tezos-node-bootstrap --performance-test --level=$${WRK_TEST_BLOCK_HEADER} --node_tezedge_target_branch=$${TEZEDGE_NODE_TARGET_BRANCH_RPC_CONTEXT_ROOT} --node_tezedge=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT} --node_ocaml=$${OCAML_NODE_RPC_CONTEXT_ROOT_1} --wrk-duration=$${WRK_TEST_DURATION}
+    - tezos-node-bootstrap --performance-test --level=$${WRK_TEST_BLOCK_HEADER} --node_stable_old_node=$${TEZEDGE_NODE_TARGET_BRANCH_RPC_CONTEXT_ROOT} --node_feature_new_node=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT} --node_ocaml=$${OCAML_NODE_RPC_CONTEXT_ROOT_1} --wrk-duration=$${WRK_TEST_DURATION}
   when:
     ref:
     - refs/pull/*/head
@@ -1674,7 +1674,7 @@ steps:
       - tezos-node run --data-dir /home/tezos/data --history-mode archive --rpc-addr 0.0.0.0:8732 --net-addr 0.0.0.0:9734 --network $${NETWORK} --no-bootstrap-peers
 
   - name: wait-for-ocaml-snapshoted-nodes
-    image: simplestakingcom/tezos-node-bootstrap:latest
+    image: simplestakingcom/tezos-node-bootstrap:test
     commands:
       - tezos-node-bootstrap --bootstrap --level=$${TO_BLOCK_HEADER} --node_ocaml_1=$${OCAML_NODE_RPC_CONTEXT_ROOT_1} --node_ocaml_2=$${OCAML_NODE_RPC_CONTEXT_ROOT_2} --node_ocaml_3=$${OCAML_NODE_RPC_CONTEXT_ROOT_3}
 
@@ -1700,9 +1700,9 @@ steps:
       - /artifacts/light-node --config-file "/artifacts/tezedge/tezedge_drone.config" --disable-bootstrap-lookup --peers $PEERS --peer-thresh-low=3 --peer-thresh-high=5 --identity-file "/artifacts/identities/identity_4.json" --network "$${NETWORK}" --protocol-runner "/tmp/tezedge_developer/protocol-runner" --p2p-port 19732
 
   - name: bootstrapping-tezedge
-    image: simplestakingcom/tezos-node-bootstrap:latest
+    image: simplestakingcom/tezos-node-bootstrap:test
     commands:
-      - tezos-node-bootstrap --bootstrap --level=$${TO_BLOCK_HEADER} --node_tezedge=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT}
+      - tezos-node-bootstrap --bootstrap --level=$${TO_BLOCK_HEADER} --node_feature_new_node=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT}
 
   # now we have prepared ocaml and tezedge node, that can run tests - rpc, wrk, indexer-test
 
@@ -1760,9 +1760,9 @@ steps:
 
   # compare indexing from FROM_BLOCK_HEADER to TO_BLOCK_HEADER between defined nodes
   - name: indexer-test
-    image: simplestakingcom/tezos-node-bootstrap:latest
+    image: simplestakingcom/tezos-node-bootstrap:test
     commands:
-      - tezos-node-bootstrap --indexer-test --level=$${TO_BLOCK_HEADER} --node_tezedge=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT} --indexer_tezedge=$${TEZEDGE_NODE_INDEXER_ROOT} --node_ocaml=$${OCAML_NODE_RPC_CONTEXT_ROOT_1} --indexer_ocaml=$${OCAML_NODE_INDEXER_ROOT}
+      - tezos-node-bootstrap --indexer-test --level=$${TO_BLOCK_HEADER} --node_feature_new_node=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT} --indexer_tezedge=$${TEZEDGE_NODE_INDEXER_ROOT} --node_ocaml=$${OCAML_NODE_RPC_CONTEXT_ROOT_1} --indexer_ocaml=$${OCAML_NODE_INDEXER_ROOT}
     # TODO: TE-349 - if new docker image is published (remove failure and detached)
     failure: ignore
     detach: true
@@ -1885,7 +1885,7 @@ steps:
       - tezos-node run --data-dir /home/tezos/data --history-mode archive --rpc-addr 0.0.0.0:8732 --net-addr 0.0.0.0:9734 --network $${NETWORK} --no-bootstrap-peers
 
   - name: wait-for-ocaml-snapshoted-nodes
-    image: simplestakingcom/tezos-node-bootstrap:latest
+    image: simplestakingcom/tezos-node-bootstrap:test
     commands:
       - tezos-node-bootstrap --bootstrap --level=$${TO_BLOCK_HEADER} --node_ocaml_1=$${OCAML_NODE_RPC_CONTEXT_ROOT_1} --node_ocaml_2=$${OCAML_NODE_RPC_CONTEXT_ROOT_2} --node_ocaml_3=$${OCAML_NODE_RPC_CONTEXT_ROOT_3}
 
@@ -1911,9 +1911,9 @@ steps:
       - /artifacts/light-node --config-file "/artifacts/tezedge/tezedge_drone.config" --disable-bootstrap-lookup --peers $PEERS --peer-thresh-low=3 --peer-thresh-high=5 --identity-file "/artifacts/identities/identity_4.json" --network "$${NETWORK}" --protocol-runner "/tmp/tezedge_developer/protocol-runner" --p2p-port 19732
 
   - name: bootstrapping-tezedge
-    image: simplestakingcom/tezos-node-bootstrap:latest
+    image: simplestakingcom/tezos-node-bootstrap:test
     commands:
-      - tezos-node-bootstrap --bootstrap --level=$${TO_BLOCK_HEADER} --node_tezedge=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT}
+      - tezos-node-bootstrap --bootstrap --level=$${TO_BLOCK_HEADER} --node_feature_new_node=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT}
 
   # now we have prepared ocaml and tezedge node, that can run tests - rpc, wrk, indexer-test
 
@@ -1971,9 +1971,9 @@ steps:
 
   # compare indexing from FROM_BLOCK_HEADER to TO_BLOCK_HEADER between defined nodes
   - name: indexer-test
-    image: simplestakingcom/tezos-node-bootstrap:latest
+    image: simplestakingcom/tezos-node-bootstrap:test
     commands:
-      - tezos-node-bootstrap --indexer-test --level=$${TO_BLOCK_HEADER} --node_tezedge=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT} --indexer_tezedge=$${TEZEDGE_NODE_INDEXER_ROOT} --node_ocaml=$${OCAML_NODE_RPC_CONTEXT_ROOT_1} --indexer_ocaml=$${OCAML_NODE_INDEXER_ROOT}
+      - tezos-node-bootstrap --indexer-test --level=$${TO_BLOCK_HEADER} --node_feature_new_node=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT} --indexer_tezedge=$${TEZEDGE_NODE_INDEXER_ROOT} --node_ocaml=$${OCAML_NODE_RPC_CONTEXT_ROOT_1} --indexer_ocaml=$${OCAML_NODE_INDEXER_ROOT}
 
 image_pull_secrets:
   - docker_pull_secret
@@ -2094,7 +2094,7 @@ steps:
       - tezos-node run --data-dir /home/tezos/data --history-mode archive --rpc-addr 0.0.0.0:8732 --net-addr 0.0.0.0:9734 --network $${NETWORK} --no-bootstrap-peers
 
   - name: wait-for-ocaml-snapshoted-nodes
-    image: simplestakingcom/tezos-node-bootstrap:latest
+    image: simplestakingcom/tezos-node-bootstrap:test
     commands:
       - tezos-node-bootstrap --bootstrap --level=$${TO_BLOCK_HEADER} --node_ocaml_1=$${OCAML_NODE_RPC_CONTEXT_ROOT_1} --node_ocaml_2=$${OCAML_NODE_RPC_CONTEXT_ROOT_2} --node_ocaml_3=$${OCAML_NODE_RPC_CONTEXT_ROOT_3}
 
@@ -2120,9 +2120,9 @@ steps:
       - /artifacts/light-node --config-file "/artifacts/tezedge/tezedge_drone.config" --disable-bootstrap-lookup --peers $PEERS --peer-thresh-low=3 --peer-thresh-high=5 --identity-file "/artifacts/identities/identity_4.json" --network "$${NETWORK}" --protocol-runner "/tmp/tezedge_developer/protocol-runner" --p2p-port 19732
 
   - name: bootstrapping-tezedge
-    image: simplestakingcom/tezos-node-bootstrap:latest
+    image: simplestakingcom/tezos-node-bootstrap:test
     commands:
-      - tezos-node-bootstrap --bootstrap --level=$${TO_BLOCK_HEADER} --node_tezedge=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT}
+      - tezos-node-bootstrap --bootstrap --level=$${TO_BLOCK_HEADER} --node_feature_new_node=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT}
 
   # now we have prepared ocaml and tezedge node, that can run tests - rpc, wrk, indexer-test
 
@@ -2183,9 +2183,9 @@ steps:
 
   # compare indexing from FROM_BLOCK_HEADER to TO_BLOCK_HEADER between defined nodes
   - name: indexer-test
-    image: simplestakingcom/tezos-node-bootstrap:latest
+    image: simplestakingcom/tezos-node-bootstrap:test
     commands:
-      - tezos-node-bootstrap --indexer-test --level=$${TO_BLOCK_HEADER} --node_tezedge=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT} --indexer_tezedge=$${TEZEDGE_NODE_INDEXER_ROOT} --node_ocaml=$${OCAML_NODE_RPC_CONTEXT_ROOT_1} --indexer_ocaml=$${OCAML_NODE_INDEXER_ROOT}
+      - tezos-node-bootstrap --indexer-test --level=$${TO_BLOCK_HEADER} --node_feature_new_node=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT} --indexer_tezedge=$${TEZEDGE_NODE_INDEXER_ROOT} --node_ocaml=$${OCAML_NODE_RPC_CONTEXT_ROOT_1} --indexer_ocaml=$${OCAML_NODE_INDEXER_ROOT}
 
 image_pull_secrets:
   - docker_pull_secret
