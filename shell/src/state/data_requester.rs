@@ -29,6 +29,7 @@ use crate::state::peer_state::{DataQueues, MissingOperations, PeerState};
 use crate::state::{BlockApplyBatch, StateError};
 use crate::utils::{CondvarResult, DeadlineTryLock, DeadlineTryLockGuard};
 use crate::validation;
+use crate::validation::CanApplyStatus;
 
 /// Shareable ref between threads
 pub type DataRequesterRef = Arc<DataRequester>;
@@ -422,17 +423,44 @@ impl DataRequester {
         };
 
         // check validation
-        if !validation::can_apply_block(
+        match validation::can_apply_block(
             (&batch.block_to_apply, &block_metadata),
             |bh| self.operations_meta_storage.is_complete(bh),
             |predecessor| self.block_meta_storage.is_applied(predecessor),
         )? {
-            return Err(StateError::ProcessingError {
-                reason: format!(
-                    "Block {} cannot be applied - missing data or non applied predecessor",
-                    batch.block_to_apply.to_base58_check()
-                ),
-            });
+            CanApplyStatus::Ready => (),
+            CanApplyStatus::AlreadyApplied => {
+                return Err(StateError::ProcessingError {
+                    reason: format!(
+                        "Block {} cannot be applied because already is_applied",
+                        batch.block_to_apply.to_base58_check()
+                    ),
+                })
+            }
+            CanApplyStatus::MissingPredecessor => {
+                return Err(StateError::ProcessingError {
+                    reason: format!(
+                        "Block {} cannot be applied because missing predecessor block",
+                        batch.block_to_apply.to_base58_check()
+                    ),
+                })
+            }
+            CanApplyStatus::PredecessorNotApplied => {
+                return Err(StateError::ProcessingError {
+                    reason: format!(
+                        "Block {} cannot be applied because predecessor block is not applied yet",
+                        batch.block_to_apply.to_base58_check()
+                    ),
+                })
+            }
+            CanApplyStatus::MissingOperations => {
+                return Err(StateError::ProcessingError {
+                    reason: format!(
+                        "Block {} cannot be applied because missing operations",
+                        batch.block_to_apply.to_base58_check()
+                    ),
+                })
+            }
         }
 
         // try to call apply
