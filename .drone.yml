@@ -1516,7 +1516,7 @@ steps:
   image: simplestakingcom/tezos-node-bootstrap:test
   pull: if-not-exists
   commands:
-    - tezos-node-bootstrap --indexer-test --level=$${TO_BLOCK_HEADER} --node_feature_new_node=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT} --indexer_tezedge=$${TEZEDGE_NODE_INDEXER_ROOT} --node_ocaml=$${OCAML_NODE_RPC_CONTEXT_ROOT_1} --indexer_ocaml=$${OCAML_NODE_INDEXER_ROOT}
+    - tezos-node-bootstrap --indexer-test --level=$${TO_BLOCK_HEADER} --node_feature_new_node=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT} --indexer_new_node=$${TEZEDGE_NODE_INDEXER_ROOT} --node_ocaml=$${OCAML_NODE_RPC_CONTEXT_ROOT_1} --indexer_ocaml=$${OCAML_NODE_INDEXER_ROOT}
 
 # compare several rpc's performances from FROM_BLOCK_HEADER to TO_BLOCK_HEADER between defined nodes (with two nodes (current branch and ocaml))
 # not triggered on pull request, because on pull request is triggered more complex wrk test
@@ -1762,7 +1762,7 @@ steps:
   - name: indexer-test
     image: simplestakingcom/tezos-node-bootstrap:test
     commands:
-      - tezos-node-bootstrap --indexer-test --level=$${TO_BLOCK_HEADER} --node_feature_new_node=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT} --indexer_tezedge=$${TEZEDGE_NODE_INDEXER_ROOT} --node_ocaml=$${OCAML_NODE_RPC_CONTEXT_ROOT_1} --indexer_ocaml=$${OCAML_NODE_INDEXER_ROOT}
+      - tezos-node-bootstrap --indexer-test --level=$${TO_BLOCK_HEADER} --node_feature_new_node=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT} --indexer_new_node=$${TEZEDGE_NODE_INDEXER_ROOT} --node_ocaml=$${OCAML_NODE_RPC_CONTEXT_ROOT_1} --indexer_ocaml=$${OCAML_NODE_INDEXER_ROOT}
     # TODO: TE-349 - if new docker image is published (remove failure and detached)
     failure: ignore
     detach: true
@@ -1973,7 +1973,7 @@ steps:
   - name: indexer-test
     image: simplestakingcom/tezos-node-bootstrap:test
     commands:
-      - tezos-node-bootstrap --indexer-test --level=$${TO_BLOCK_HEADER} --node_feature_new_node=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT} --indexer_tezedge=$${TEZEDGE_NODE_INDEXER_ROOT} --node_ocaml=$${OCAML_NODE_RPC_CONTEXT_ROOT_1} --indexer_ocaml=$${OCAML_NODE_INDEXER_ROOT}
+      - tezos-node-bootstrap --indexer-test --level=$${TO_BLOCK_HEADER} --node_feature_new_node=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT} --indexer_new_node=$${TEZEDGE_NODE_INDEXER_ROOT} --node_ocaml=$${OCAML_NODE_RPC_CONTEXT_ROOT_1} --indexer_ocaml=$${OCAML_NODE_INDEXER_ROOT}
 
 image_pull_secrets:
   - docker_pull_secret
@@ -2185,7 +2185,7 @@ steps:
   - name: indexer-test
     image: simplestakingcom/tezos-node-bootstrap:test
     commands:
-      - tezos-node-bootstrap --indexer-test --level=$${TO_BLOCK_HEADER} --node_feature_new_node=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT} --indexer_tezedge=$${TEZEDGE_NODE_INDEXER_ROOT} --node_ocaml=$${OCAML_NODE_RPC_CONTEXT_ROOT_1} --indexer_ocaml=$${OCAML_NODE_INDEXER_ROOT}
+      - tezos-node-bootstrap --indexer-test --level=$${TO_BLOCK_HEADER} --node_feature_new_node=$${TEZEDGE_NODE_RPC_CONTEXT_ROOT} --indexer_new_node=$${TEZEDGE_NODE_INDEXER_ROOT} --node_ocaml=$${OCAML_NODE_RPC_CONTEXT_ROOT_1} --indexer_ocaml=$${OCAML_NODE_INDEXER_ROOT}
 
 image_pull_secrets:
   - docker_pull_secret
