@@ -3,7 +3,7 @@
 
 use std::cmp::Ordering;
 use std::collections::HashSet;
-use std::sync::PoisonError;
+use std::sync::{Arc, PoisonError};
 
 use failure::Fail;
 
@@ -59,6 +59,65 @@ impl From<failure::Error> for StateError {
         StateError::ProcessingError {
             reason: format!("{}", error),
         }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct BlockApplyBatch {
+    pub block_to_apply: Arc<BlockHash>,
+    pub successors: Vec<Arc<BlockHash>>,
+}
+
+impl BlockApplyBatch {
+    pub fn one(block_hash: BlockHash) -> Self {
+        Self {
+            block_to_apply: Arc::new(block_hash),
+            successors: Vec::new(),
+        }
+    }
+
+    pub fn start_batch(block_hash: Arc<BlockHash>) -> Self {
+        Self {
+            block_to_apply: block_hash,
+            successors: Vec::new(),
+        }
+    }
+
+    pub fn batch(starting_block: Arc<BlockHash>, successors: Vec<Arc<BlockHash>>) -> Self {
+        Self {
+            block_to_apply: starting_block,
+            successors,
+        }
+    }
+
+    pub fn add_successor(&mut self, block_hash: Arc<BlockHash>) {
+        if !self.successors.contains(&block_hash) {
+            self.successors.push(block_hash);
+        }
+    }
+
+    pub fn successors_size(&self) -> usize {
+        self.successors.len()
+    }
+
+    pub fn take_all_blocks_to_apply(self) -> Vec<Arc<BlockHash>> {
+        let Self {
+            block_to_apply,
+            mut successors,
+        } = self;
+
+        successors.insert(0, block_to_apply);
+        successors
+    }
+}
+
+impl From<BlockApplyBatch> for (Arc<BlockHash>, Vec<Arc<BlockHash>>) {
+    fn from(b: BlockApplyBatch) -> Self {
+        let BlockApplyBatch {
+            block_to_apply,
+            successors,
+        } = b;
+        (block_to_apply, successors)
     }
 }
 
