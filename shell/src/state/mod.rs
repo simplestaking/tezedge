@@ -21,11 +21,11 @@ pub mod synchronization_state;
 /// Possible errors for state processing
 #[derive(Debug, Fail)]
 pub enum StateError {
-    #[fail(display = "Storage read/write error! Reason: {:?}", error)]
+    #[fail(display = "Storage read/write error, reason: {:?}", error)]
     StorageError { error: StorageError },
-    #[fail(display = "Mutex/lock lock error! Reason: {:?}", reason)]
+    #[fail(display = "Mutex/lock error, reason: {:?}", reason)]
     LockError { reason: String },
-    #[fail(display = "Processing error! Reason: {:?}", reason)]
+    #[fail(display = "State processing error, reason: {:?}", reason)]
     ProcessingError { reason: String },
 }
 

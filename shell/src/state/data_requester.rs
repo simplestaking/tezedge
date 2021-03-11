@@ -435,7 +435,7 @@ impl DataRequester {
                         "Block {} cannot be applied because already is_applied",
                         batch.block_to_apply.to_base58_check()
                     ),
-                })
+                });
             }
             CanApplyStatus::MissingPredecessor => {
                 return Err(StateError::ProcessingError {

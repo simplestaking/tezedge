@@ -253,11 +253,11 @@ pub enum FeedChainError {
         context_hash: String,
         reason: String,
     },
-    #[fail(display = "Storage read/write error! Reason: {:?}", error)]
+    #[fail(display = "Storage read/write error,r eason: {:?}", error)]
     StorageError { error: StorageError },
-    #[fail(display = "Protocol service error error! Reason: {:?}", error)]
+    #[fail(display = "Protocol service error error, reason: {:?}", error)]
     ProtocolServiceError { error: ProtocolServiceError },
-    #[fail(display = "Block apply processing error! Reason: {:?}", reason)]
+    #[fail(display = "Block apply processing error, reason: {:?}", reason)]
     ProcessingError { reason: String },
 }
 

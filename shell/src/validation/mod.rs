@@ -191,10 +191,10 @@ pub enum PrevalidateOperationError {
         reason
     )]
     PrevalidatorNotInitialized { reason: String },
-    #[fail(display = "Storage read error! Reason: {:?}", error)]
+    #[fail(display = "Storage read error, reason: {:?}", error)]
     StorageError { error: StorageError },
     #[fail(
-        display = "Failed to validate operation: {}! Reason: {:?}",
+        display = "Failed to validate operation: {}, reason: {:?}",
         operation_hash, reason
     )]
     ValidationError {
